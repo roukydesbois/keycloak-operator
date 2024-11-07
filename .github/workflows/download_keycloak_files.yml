@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install yq
-        run: sudo apt-get install -y yq
+      # - name: Install yq
+      #   run: sudo apt-get install -y yq
 
       # Step 1: Checkout the repository
       - name: Checkout Repository
