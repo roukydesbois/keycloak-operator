@@ -1,0 +1,1 @@
+Proxy Helm chart for the keycloak operator - "just" periodically checks whether there is a new tag in the keycloak operator repo, downloads the files, and bumps the version and appVersion of the Chart
