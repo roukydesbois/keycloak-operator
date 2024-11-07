@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # - name: Install yq
-      #   run: sudo apt-get install -y yq
 
       # Step 1: Checkout the repository
       - name: Checkout Repository
@@ -29,7 +27,7 @@ jobs:
       - name: Check if Update is Needed
         id: check_update_needed
         run: |
-          CHART_PATH="Chart.yaml"
+          CHART_PATH="keycloak-operator/Chart.yaml"
           CURRENT_APP_VERSION=$(yq e '.appVersion' $CHART_PATH)
           LATEST_TAG="${{ env.tag }}"
 
@@ -50,18 +48,18 @@ jobs:
           BASE_URL="https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/$VERSION/kubernetes"
           
           # Create the templates directory if it doesn't exist
-          mkdir -p templates
+          mkdir -p keycloak-operator/templates
           
           # Download each file into the templates folder
-          curl -fL "$BASE_URL/keycloaks.k8s.keycloak.org-v1.yml" -o templates/keycloaks-crd.yml
-          curl -fL "$BASE_URL/keycloakrealmimports.k8s.keycloak.org-v1.yml" -o templates/keycloakrealmimports-crd.yml
-          curl -fL "$BASE_URL/kubernetes.yml" -o templates/kubernetes-operator.yml
+          curl -fL "$BASE_URL/keycloaks.k8s.keycloak.org-v1.yml" -o keycloak-operator/templates/keycloaks-crd.yml
+          curl -fL "$BASE_URL/keycloakrealmimports.k8s.keycloak.org-v1.yml" -o keycloak-operator/templates/keycloakrealmimports-crd.yml
+          curl -fL "$BASE_URL/kubernetes.yml" -o keycloak-operator/templates/kubernetes-operator.yml
 
       # Step 5: Update Chart.yaml with the latest appVersion and increment the chart version if an update is needed
       - name: Update Chart.yaml
         if: env.update_needed == 'true'
         run: |
-          CHART_PATH="Chart.yaml"
+          CHART_PATH="keycloak-operator/Chart.yaml"
           VERSION="${{ env.tag }}"
 
           # Update the appVersion to the latest tag
@@ -78,7 +76,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add templates Chart.yaml
+          git add keycloak-operator/templates keycloak-operator/Chart.yaml
           git commit -m "Update Keycloak manifests to version $VERSION and bump chart version"
 
       - name: Push Changes
