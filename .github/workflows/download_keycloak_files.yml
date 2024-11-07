@@ -40,6 +40,7 @@ jobs:
           else
             echo "No update needed: current appVersion $CURRENT_APP_VERSION is the latest."
             echo "update_needed=false" >> $GITHUB_ENV
+          fi
 
       # Step 4: Download Keycloak CRD Manifests to the templates directory if an update is needed
       - name: Download Keycloak CRD Manifests
