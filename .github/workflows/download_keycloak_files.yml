@@ -10,9 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install yq
-        run: sudo apt-get install -y yq
-    
       # Step 1: Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -25,8 +22,25 @@ jobs:
           echo "Latest non-nightly tag: $latest_tag"
           echo "tag=$latest_tag" >> $GITHUB_ENV
 
-      # Step 3: Download Keycloak manifest files to the Helm chart's templates directory
+      # Step 3: Check current appVersion in Chart.yaml and compare with latest tag
+      - name: Check if Update is Needed
+        id: check_update_needed
+        run: |
+          CHART_PATH="Chart.yaml"
+          CURRENT_APP_VERSION=$(yq e '.appVersion' $CHART_PATH)
+          LATEST_TAG="${{ env.tag }}"
+
+          # Compare versions
+          if [ "$(printf '%s\n' "$LATEST_TAG" "$CURRENT_APP_VERSION" | sort -V | tail -n 1)" != "$CURRENT_APP_VERSION" ]; then
+            echo "Update needed: current appVersion $CURRENT_APP_VERSION is older than latest tag $LATEST_TAG."
+            echo "update_needed=true" >> $GITHUB_ENV
+          else
+            echo "No update needed: current appVersion $CURRENT_APP_VERSION is the latest."
+            echo "update_needed=false" >> $GITHUB_ENV
+
+      # Step 4: Download Keycloak CRD Manifests to the templates directory if an update is needed
       - name: Download Keycloak CRD Manifests
+        if: env.update_needed == 'true'
         run: |
           VERSION="${{ env.tag }}"
           BASE_URL="https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/$VERSION/kubernetes"
@@ -39,8 +53,9 @@ jobs:
           curl -fL "$BASE_URL/keycloakrealmimports.k8s.keycloak.org-v1.yml" -o templates/keycloakrealmimports-crd.yml
           curl -fL "$BASE_URL/kubernetes.yml" -o templates/kubernetes-operator.yml
 
-      # Step 4: Update Chart.yaml with the latest appVersion and increment the chart version
+      # Step 5: Update Chart.yaml with the latest appVersion and increment the chart version if an update is needed
       - name: Update Chart.yaml
+        if: env.update_needed == 'true'
         run: |
           CHART_PATH="Chart.yaml"
           VERSION="${{ env.tag }}"
@@ -50,19 +65,20 @@ jobs:
 
           # Increment the chart version (patch version bump)
           current_version=$(yq e '.version' $CHART_PATH)
-          new_version=$(echo $current_version | awk -F. '{$NF += 1; OFS="."; print $0}')
+          new_version=$(echo $current_version | awk -F. '{print $1"."$2"."$3+1}')
           yq e ".version = \"$new_version\"" -i $CHART_PATH
 
-      # Step 5: Commit and push changes to the main branch
+      # Step 6: Commit and push changes if an update is needed
       - name: Commit Changes
+        if: env.update_needed == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add templates Chart.yaml
           git commit -m "Update Keycloak manifests to version $VERSION and bump chart version"
-        continue-on-error: true
 
       - name: Push Changes
+        if: env.update_needed == 'true'
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
