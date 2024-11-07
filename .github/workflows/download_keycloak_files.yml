@@ -1,0 +1,52 @@
+name: Download Latest Keycloak Manifests (Non-Nightly)
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"  # Runs weekly on Monday at midnight
+  workflow_dispatch:
+
+jobs:
+  download-latest-and-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Get the latest non-nightly tag from the Keycloak operator GitHub repository
+      - name: Get Latest Non-Nightly Tag
+        id: get_latest_tag
+        run: |
+          latest_tag=$(curl -s https://api.github.com/repos/keycloak/keycloak-k8s-resources/git/refs/tags | jq -r '.[].ref' | grep -v "nightly" | sed 's|refs/tags/||' | sort -V | tail -n 1)
+          echo "Latest non-nightly tag: $latest_tag"
+          echo "tag=$latest_tag" >> $GITHUB_ENV
+
+      # Step 3: Download Keycloak manifest files for the latest non-nightly tag
+      - name: Download Keycloak CRD Manifests
+        run: |
+          VERSION="${{ env.tag }}"
+          BASE_URL="https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/$VERSION/kubernetes"
+          
+          # Create a directory to store manifests
+          mkdir -p manifests/keycloak-$VERSION
+          
+          # Download each file
+          curl -fL "$BASE_URL/keycloaks.k8s.keycloak.org-v1.yml" -o manifests/keycloak-$VERSION/keycloaks-crd.yml
+          curl -fL "$BASE_URL/keycloakrealmimports.k8s.keycloak.org-v1.yml" -o manifests/keycloak-$VERSION/keycloakrealmimports-crd.yml
+          curl -fL "$BASE_URL/kubernetes.yml" -o manifests/keycloak-$VERSION/kubernetes-operator.yml
+
+      # Step 4: Commit the downloaded files
+      - name: Commit Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifests/
+          git commit -m "Add Keycloak manifests for version $VERSION"
+        continue-on-error: true
+
+      # Step 5: Push changes back to the repository
+      - name: Push Changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
