@@ -1,4 +1,4 @@
-name: Download Latest Keycloak Manifests (Non-Nightly)
+name: Update Keycloak Helm Chart
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  download-latest-and-commit:
+  update-helm-chart:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,32 +22,45 @@ jobs:
           echo "Latest non-nightly tag: $latest_tag"
           echo "tag=$latest_tag" >> $GITHUB_ENV
 
-      # Step 3: Download Keycloak manifest files for the latest non-nightly tag
+      # Step 3: Download Keycloak manifest files to the Helm chart's templates directory
       - name: Download Keycloak CRD Manifests
         run: |
           VERSION="${{ env.tag }}"
           BASE_URL="https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/$VERSION/kubernetes"
           
-          # Create a directory to store manifests
-          mkdir -p manifests/keycloak-$VERSION
+          # Create the templates directory if it doesn't exist
+          mkdir -p templates
           
-          # Download each file
-          curl -fL "$BASE_URL/keycloaks.k8s.keycloak.org-v1.yml" -o manifests/keycloak-$VERSION/keycloaks-crd.yml
-          curl -fL "$BASE_URL/keycloakrealmimports.k8s.keycloak.org-v1.yml" -o manifests/keycloak-$VERSION/keycloakrealmimports-crd.yml
-          curl -fL "$BASE_URL/kubernetes.yml" -o manifests/keycloak-$VERSION/kubernetes-operator.yml
+          # Download each file into the templates folder
+          curl -fL "$BASE_URL/keycloaks.k8s.keycloak.org-v1.yml" -o templates/keycloaks-crd.yml
+          curl -fL "$BASE_URL/keycloakrealmimports.k8s.keycloak.org-v1.yml" -o templates/keycloakrealmimports-crd.yml
+          curl -fL "$BASE_URL/kubernetes.yml" -o templates/kubernetes-operator.yml
 
-      # Step 4: Commit the downloaded files
+      # Step 4: Update Chart.yaml with the latest appVersion and increment the chart version
+      - name: Update Chart.yaml
+        run: |
+          CHART_PATH="Chart.yaml"
+          VERSION="${{ env.tag }}"
+
+          # Update the appVersion to the latest tag
+          yq e ".appVersion = \"$VERSION\"" -i $CHART_PATH
+
+          # Increment the chart version (patch version bump)
+          current_version=$(yq e '.version' $CHART_PATH)
+          new_version=$(echo $current_version | awk -F. '{$NF += 1; OFS="."; print $0}')
+          yq e ".version = \"$new_version\"" -i $CHART_PATH
+
+      # Step 5: Commit and push changes to the main branch
       - name: Commit Changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add manifests/
-          git commit -m "Add Keycloak manifests for version $VERSION"
+          git add templates Chart.yaml
+          git commit -m "Update Keycloak manifests to version $VERSION and bump chart version"
         continue-on-error: true
 
-      # Step 5: Push changes back to the repository
       - name: Push Changes
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: main
+          branch: main  # Specify the branch to push to
