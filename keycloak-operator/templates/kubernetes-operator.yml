@@ -5,10 +5,10 @@ metadata:
   annotations:
     app.quarkus.io/quarkus-version: 3.27.0
     app.quarkus.io/vcs-uri: https://github.com/keycloak/keycloak.git
-    app.quarkus.io/build-timestamp: 2025-09-30 - 11:54:50 +0000
+    app.quarkus.io/build-timestamp: 2025-10-16 - 07:28:37 +0000
   labels:
     app.kubernetes.io/name: keycloak-operator
-    app.kubernetes.io/version: 26.4.0
+    app.kubernetes.io/version: 26.4.1
     app.kubernetes.io/managed-by: quarkus
   name: keycloak-operator
 ---
@@ -19,12 +19,6 @@ metadata:
     app.kubernetes.io/name: keycloak-operator
   name: keycloak-operator-clusterrole
 rules:
-  - apiGroups:
-      - apiextensions.k8s.io
-    resources:
-      - customresourcedefinitions
-    verbs:
-      - get
   - apiGroups:
       - config.openshift.io
     resources:
@@ -37,7 +31,7 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: keycloak-operator
-    app.kubernetes.io/version: 26.4.0
+    app.kubernetes.io/version: 26.4.1
   name: keycloakrealmimportcontroller-cluster-role
 rules:
   - apiGroups:
@@ -83,7 +77,7 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: keycloak-operator
-    app.kubernetes.io/version: 26.4.0
+    app.kubernetes.io/version: 26.4.1
   name: keycloakcontroller-cluster-role
 rules:
   - apiGroups:
@@ -293,7 +287,7 @@ kind: RoleBinding
 metadata:
   labels:
     app.kubernetes.io/name: keycloak-operator
-    app.kubernetes.io/version: 26.4.0
+    app.kubernetes.io/version: 26.4.1
   name: keycloakrealmimportcontroller-role-binding
 roleRef:
   kind: ClusterRole
@@ -308,7 +302,7 @@ kind: RoleBinding
 metadata:
   labels:
     app.kubernetes.io/name: keycloak-operator
-    app.kubernetes.io/version: 26.4.0
+    app.kubernetes.io/version: 26.4.1
   name: keycloakcontroller-role-binding
 roleRef:
   kind: ClusterRole
@@ -323,7 +317,7 @@ kind: RoleBinding
 metadata:
   labels:
     app.kubernetes.io/name: keycloak-operator
-    app.kubernetes.io/version: 26.4.0
+    app.kubernetes.io/version: 26.4.1
   name: keycloak-operator-view
 roleRef:
   kind: ClusterRole
@@ -339,10 +333,10 @@ metadata:
   annotations:
     app.quarkus.io/quarkus-version: 3.27.0
     app.quarkus.io/vcs-uri: https://github.com/keycloak/keycloak.git
-    app.quarkus.io/build-timestamp: 2025-09-30 - 11:54:50 +0000
+    app.quarkus.io/build-timestamp: 2025-10-16 - 07:28:37 +0000
   labels:
     app.kubernetes.io/name: keycloak-operator
-    app.kubernetes.io/version: 26.4.0
+    app.kubernetes.io/version: 26.4.1
     app.kubernetes.io/managed-by: quarkus
   name: keycloak-operator
 spec:
@@ -361,10 +355,10 @@ metadata:
   annotations:
     app.quarkus.io/quarkus-version: 3.27.0
     app.quarkus.io/vcs-uri: https://github.com/keycloak/keycloak.git
-    app.quarkus.io/build-timestamp: 2025-09-30 - 11:54:50 +0000
+    app.quarkus.io/build-timestamp: 2025-10-16 - 07:28:37 +0000
   labels:
     app.kubernetes.io/name: keycloak-operator
-    app.kubernetes.io/version: 26.4.0
+    app.kubernetes.io/version: 26.4.1
     app.kubernetes.io/managed-by: quarkus
   name: keycloak-operator
 spec:
@@ -377,11 +371,11 @@ spec:
       annotations:
         app.quarkus.io/quarkus-version: 3.27.0
         app.quarkus.io/vcs-uri: https://github.com/keycloak/keycloak.git
-        app.quarkus.io/build-timestamp: 2025-09-30 - 11:54:50 +0000
+        app.quarkus.io/build-timestamp: 2025-10-16 - 07:28:37 +0000
       labels:
         app.kubernetes.io/managed-by: quarkus
-        app.kubernetes.io/version: 26.4.0
         app.kubernetes.io/name: keycloak-operator
+        app.kubernetes.io/version: 26.4.1
     spec:
       containers:
         - env:
@@ -390,8 +384,8 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: RELATED_IMAGE_KEYCLOAK
-              value: quay.io/keycloak/keycloak:26.4.0
-          image: quay.io/keycloak/keycloak-operator:26.4.0
+              value: quay.io/keycloak/keycloak:26.4.1
+          image: quay.io/keycloak/keycloak-operator:26.4.1
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
